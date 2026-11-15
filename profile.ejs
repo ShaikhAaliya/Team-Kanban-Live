@@ -1,0 +1,4 @@
+<%- include('partials/header',{title:'Profile'}) %>
+<div class="page-head"><div><h1>My Profile</h1><p>Account information and task progress.</p></div></div>
+<div class="profile-grid"><form class="card form-card" method="post"><h2>Profile details</h2><label>Name</label><input name="name" value="<%= user.name %>" required><label>Email</label><input value="<%= user.email %>" disabled><label>Role</label><input value="<%= user.role %>" disabled><button class="btn primary">Save changes</button></form><div class="card stats-card"><h2>My task summary</h2><div class="stat-big"><%= stats.total||0 %><small>Assigned tasks</small></div><div class="stat-big"><%= stats.completed||0 %><small>Completed</small></div><p class="muted">Member since <%= new Date(user.created_at).toLocaleDateString() %></p></div></div>
+<%- include('partials/footer') %>

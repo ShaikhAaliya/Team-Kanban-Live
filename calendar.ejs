@@ -1,0 +1,7 @@
+<%- include('../partials/header',{title:'Calendar'}) %>
+<div class="page-head"><div><a class="muted" href="/projects/<%= project.id %>">← Kanban</a><h1><%= project.name %> Calendar</h1><p>Tasks with due dates.</p></div></div>
+<div class="card calendar-grid">
+<% if (!tasks.length) { %><div class="empty">No tasks have due dates yet.</div><% } %>
+<% tasks.forEach(t=>{ %><a class="calendar-task" href="/projects/<%= project.id %>/tasks/<%= t.id %>"><strong><%= t.title %></strong><span><%= t.due_date %></span><small><%= t.assignee||'Unassigned' %> · <%= t.status.replace('_',' ') %></small></a><% }) %>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,5 @@
+const express=require('express'); const db=require('../database/db'); const {requireAuth}=require('../middleware/auth');
+const router=express.Router();
+router.get('/dashboard',requireAuth,(req,res)=>{const projects=db.prepare(`SELECT p.*, COUNT(DISTINCT t.id) task_count, SUM(CASE WHEN t.status='done' THEN 1 ELSE 0 END) done_count FROM projects p LEFT JOIN tasks t ON t.project_id=p.id JOIN project_members pm ON pm.project_id=p.id WHERE pm.user_id=? GROUP BY p.id ORDER BY p.created_at DESC`).all(req.session.user.id); res.render('dashboard',{projects});});
+router.post('/projects',requireAuth,(req,res)=>{const {name,description}=req.body;if(!name?.trim())return res.redirect('/dashboard');const r=db.prepare('INSERT INTO projects(name,description,owner_id) VALUES(?,?,?)').run(name.trim(),description||'',req.session.user.id);db.prepare('INSERT INTO project_members(project_id,user_id,role) VALUES(?,?,?)').run(r.lastInsertRowid,req.session.user.id,'owner');res.redirect('/projects/'+r.lastInsertRowid);});
+module.exports=router;

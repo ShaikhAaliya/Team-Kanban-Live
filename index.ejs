@@ -1,0 +1,37 @@
+<%- include('../partials/header') %>
+<main class="container wide">
+  <div class="page-head">
+    <div><p class="eyebrow">ADMINISTRATION</p><h1>Admin Dashboard</h1><p class="muted">Monitor users, projects, tasks and overall project activity.</p></div>
+    <a class="primary admin-link" href="/dashboard">← Workspace</a>
+  </div>
+  <section class="stats admin-stats">
+    <div><b><%= totals.users %></b><span>Users</span></div>
+    <div><b><%= totals.projects %></b><span>Projects</span></div>
+    <div><b><%= totals.tasks %></b><span>Total Tasks</span></div>
+    <div><b><%= totals.done %></b><span>Completed</span></div>
+    <div><b><%= totals.overdue %></b><span>Overdue</span></div>
+  </section>
+  <section class="analytics-grid">
+    <div class="panel chart-panel"><div class="panel-head"><h2>Task Status</h2><span>Current distribution</span></div><canvas id="statusChart"></canvas></div>
+    <div class="panel chart-panel"><div class="panel-head"><h2>Priority</h2><span>Current workload</span></div><canvas id="priorityChart"></canvas></div>
+    <div class="panel chart-panel full-chart"><div class="panel-head"><h2>Project Progress</h2><span>Completed vs total tasks</span></div><canvas id="projectChart"></canvas></div>
+  </section>
+  <section class="panel admin-section"><div class="panel-head"><div><h2>Users</h2><span>Manage access roles</span></div><input id="userSearch" class="small-input" placeholder="Search users..."></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>User</th><th>Role</th><th>Projects</th><th>Assigned Tasks</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="usersBody">
+      <% users.forEach(u=>{ %><tr class="user-row"><td><strong><%= u.name %></strong><small><%= u.email %></small></td><td><form method="post" action="/admin/users/<%=u.id%>/role"><select name="role" onchange="this.form.submit()" <%=u.id===currentUser.id?'disabled':''%>><option value="member" <%=u.role==='member'?'selected':''%>>Member</option><option value="admin" <%=u.role==='admin'?'selected':''%>>Admin</option></select></form></td><td><%=u.project_count%></td><td><%=u.task_count%></td><td><%=new Date(u.created_at).toLocaleDateString()%></td><td><% if(u.id!==currentUser.id){ %><form method="post" action="/admin/users/<%=u.id%>/delete" onsubmit="return confirm('Delete this user?')"><button class="danger-btn">Delete</button></form><% } else { %><span class="muted">Current user</span><% } %></td></tr><% }) %>
+    </tbody></table></div>
+  </section>
+  <section class="panel admin-section"><div class="panel-head"><div><h2>Projects</h2><span>Project-level progress</span></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Project</th><th>Owner</th><th>Members</th><th>Tasks</th><th>Completed</th><th>Progress</th></tr></thead><tbody>
+  <% projects.forEach(p=>{ const progress=p.task_count?Math.round((p.done_count/p.task_count)*100):0; %><tr><td><a href="/projects/<%=p.id%>" class="table-link"><%=p.name%></a></td><td><%=p.owner%></td><td><%=p.member_count%></td><td><%=p.task_count%></td><td><%=p.done_count%></td><td><div class="progress"><span style="width:<%=progress%>%"></span></div><small><%=progress%>%</small></td></tr><% }) %>
+  </tbody></table></div></section>
+  <section class="panel admin-section"><div class="panel-head"><div><h2>Recent Activity</h2><span>Latest workspace events</span></div></div><div class="activity-list"><% recent.forEach(a=>{ %><div class="activity"><strong><%=a.user_name%></strong> <%=a.action%> <% if(a.task_title){ %><b>“<%=a.task_title%>”</b><% } %><small><%=a.project_name%> · <%=new Date(a.created_at).toLocaleString()%></small></div><% }) %><% if(!recent.length){ %><div class="empty">No activity yet.</div><% } %></div></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const statusData=<%- JSON.stringify(status) %>, priorityData=<%- JSON.stringify(priority) %>, projectData=<%- JSON.stringify(projects.slice(0,10).map(p=>({name:p.name,total:p.task_count||0,done:p.done_count||0}))) %>;
+new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{labels:statusData.map(x=>x.status.replace('_',' ')),datasets:[{data:statusData.map(x=>x.count)}]},options:{plugins:{legend:{position:'bottom'}}}});
+new Chart(document.getElementById('priorityChart'),{type:'bar',data:{labels:priorityData.map(x=>x.priority),datasets:[{label:'Tasks',data:priorityData.map(x=>x.count)}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+new Chart(document.getElementById('projectChart'),{type:'bar',data:{labels:projectData.map(x=>x.name),datasets:[{label:'Total',data:projectData.map(x=>x.total)},{label:'Done',data:projectData.map(x=>x.done)}]},options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+document.getElementById('userSearch').addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('.user-row').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none')});
+</script>
+<%- include('../partials/footer') %>
